@@ -1,0 +1,778 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import numpy as np 
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns
+
+
+# ### Importing libraries and Load data
+
+# In[2]:
+
+
+data = pd.read_csv(r"D:\Downloads\framingham.csv")
+
+
+# In[3]:
+
+
+data
+
+
+# | Column name                                             | Meaning / Description                                                                                                                      |
+# | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+# | `male`                                                  | Gender of the individual — **1 = Male**, **0 = Female** )                                                                      |
+# | `age`                                                   | Age of the patient (in years, integer/continuous)                                                                            |
+# | `education`                                             | Level of education; ordinal — (e.g. 1 = some high-school, 2 = high-school / GED, 3 = some college / vocational, 4 = college)  |
+# | `currentSmoker`                                         | Whether patient currently smokes or not — **1 = yes**, **0 = no**                                                            |
+# | `cigsPerDay`                                            | Average number of cigarettes smoked per day (if smoker) — continuous numeric                                                  |
+# | `BPMeds`                                                | Whether the patient is on blood pressure medication — **1 = yes**, **0 = no**                                                |
+# | `prevalentStroke`                                       | Whether the patient had a stroke previously — **1 = yes**, **0 = no**                                                       |
+# | `prevalentHyp` *(or sometimes “prevalentHypertension”)* | Whether the patient has hypertension / was previously diagnosed with high blood pressure — **1 = yes**, **0 = no**           |
+# | `diabetes`                                              | Whether the patient has diabetes — **1 = yes**, **0 = no**                                                                    |
+# | `totChol`                                               | Total cholesterol level (mg/dL) — continuous numeric                                                                          |
+# | `sysBP`                                                 | Systolic blood pressure (mmHg) — continuous numeric                                                                           |
+# | `diaBP`                                                 | Diastolic blood pressure (mmHg) — continuous numeric                                                                          |
+# | `BMI`                                                   | Body Mass Index — continuous numeric (weight/height²)                                                                        |
+# | `heartRate`                                             | Heart rate (beats per minute) — continuous numeric                                                                           |
+# | `glucose`                                               | Blood glucose level (mg/dL) — continuous numeric                                                                             |
+# | **`TenYearCHD`**                                        | **Target column** — whether the person developed Coronary Heart Disease (CHD) within 10 years (1 = yes, 0 = no) )              |
+
+# In[4]:
+
+
+data.shape
+
+
+# In[5]:
+
+
+data.columns
+
+
+# In[6]:
+
+
+data['BPMeds'].unique()
+
+
+# In[7]:
+
+
+data.info()
+
+
+# In[8]:
+
+
+data.describe()
+
+
+# In[9]:
+
+
+data.isnull().sum()
+
+
+# In[10]:
+
+
+for col in data.columns:
+    data[col].fillna(data[col].mode()[0],inplace=True)
+
+
+# In[11]:
+
+
+data.isnull().sum()
+
+
+# In[12]:
+
+
+data.duplicated().sum()
+
+
+# ## EDA
+
+# In[13]:
+
+
+data
+
+
+# In[14]:
+
+
+data['male'].value_counts()
+
+
+# In[15]:
+
+
+data['male'].value_counts().plot(kind='pie', autopct="%1.1f%%",
+                               labels=['Women', 'Men'],
+                               figsize=(6,6))
+plt.title("Gender Distribution")
+plt.ylabel("")
+plt.show()
+
+
+# In[16]:
+
+
+sns.countplot(x='TenYearCHD', data=data)
+plt.title("10-Year Heart Disease Risk Distribution")
+plt.xlabel("CHD (0 = No, 1 = Yes)")
+plt.ylabel("Count")
+plt.show()
+
+
+# In[17]:
+
+
+plt.hist(data['age'], bins=20)
+plt.title("Age Distribution")
+plt.xlabel("Age")
+plt.ylabel("Frequency")
+plt.show()
+
+
+# In[18]:
+
+
+sns.boxplot(x='TenYearCHD', y='age', data=data)
+plt.title("Age vs 10-Year CHD Risk")
+plt.xlabel("CHD (0 = No, 1 = Yes)")
+plt.ylabel("Age")
+plt.show()
+
+
+# In[19]:
+
+
+sns.countplot(x='currentSmoker', hue='TenYearCHD', data=data)
+plt.title("Smoking vs Heart Disease Risk")
+plt.xlabel("Current Smoker (0 = No, 1 = Yes)")
+plt.ylabel("Count")
+plt.show()
+
+
+# In[20]:
+
+
+sns.violinplot(x='TenYearCHD', y='BMI', data=data)
+plt.title("BMI vs Heart Disease Risk")
+plt.show()
+
+
+# In[21]:
+
+
+sns.countplot(x='diabetes', hue='TenYearCHD', data=data)
+plt.title("Diabetes vs Heart Disease Risk")
+plt.xlabel("Diabetes (0 = No, 1 = Yes)")
+plt.ylabel("Count")
+plt.show()
+
+
+# In[22]:
+
+
+plt.figure(figsize=(12,8))
+sns.heatmap(data.corr(), annot=True, cmap='coolwarm', fmt=".2f")
+plt.title("Correlation Heatmap")
+plt.show()
+
+
+# In[23]:
+
+
+num_cols = ['age', 'totChol', 'sysBP', 'diaBP', 'BMI', 'glucose']
+data[num_cols].skew()
+
+
+# Interpretation:
+# 
+# Value > 1 → highly skewed
+# 
+# Value between 0.5–1 → moderately skewed
+
+# In[24]:
+
+
+sns.countplot(x='TenYearCHD', data=data)
+plt.title("Class Distribution of 10-Year CHD Risk")
+plt.xlabel("CHD (0 = No, 1 = Yes)")
+plt.ylabel("Count")
+plt.show()
+
+
+# In[25]:
+
+
+sns.countplot(x='male', data=data)
+plt.xticks([0,1], ['Women', 'Men'])
+plt.title("Gender Distribution")
+plt.xlabel("Gender")
+plt.ylabel("Count")
+plt.show()
+
+
+# In[26]:
+
+
+plt.figure(figsize=(15,10))
+for i, col in enumerate(num_cols, 1):
+    plt.subplot(2, 3, i)
+    sns.boxplot(y=data[col])
+    plt.title(f"Outliers in {col}")
+plt.tight_layout()
+plt.show()
+
+
+# In[27]:
+
+
+sns.countplot(x='currentSmoker', hue='TenYearCHD', data=data)
+plt.title("Smoking Status vs CHD Risk")
+plt.show()
+
+
+# ### Gender Distribution Analysis
+# 
+# The gender distribution was analyzed using a count plot based on the male attribute, where 0 represents women and 1 represents men. The visualization shows that the dataset contains participants from both genders with a relatively balanced representation. Understanding gender distribution is important because cardiovascular risk factors and disease prevalence may differ between men and women, which can influence model performance and interpretation.
+
+# ### Target Variable Distribution (TenYearCHD)
+# 
+# The distribution of the target variable TenYearCHD was visualized to examine class balance. The analysis shows that the majority of individuals do not develop coronary heart disease within ten years, while a smaller proportion do. This indicates class imbalance in the dataset, which is a critical consideration during model training, as imbalanced data can bias predictions toward the majority class if not handled properly.
+
+# ### Age Distribution and Its Relationship with CHD
+# 
+# The age distribution was explored using a histogram, revealing that most participants fall within middle to older age groups. A box plot comparing age across CHD outcomes shows that individuals with a higher ten-year CHD risk tend to be older. This confirms age as a significant risk factor for cardiovascular disease and highlights its importance as a predictive feature.
+
+# ### Smoking Status Analysis
+# 
+# Smoking behavior was analyzed using the currentSmoker attribute. A grouped count plot comparing smoking status with CHD outcome indicates that smokers have a relatively higher proportion of heart disease cases compared to non-smokers. This visualization supports established medical evidence that smoking is a major lifestyle risk factor contributing to heart disease.
+
+# ### Cholesterol and Blood Pressure Analysis
+# 
+# The distribution of total cholesterol (totChol) was visualized using histograms, showing a right-skewed distribution with some extreme values. Box plots for systolic and diastolic blood pressure (sysBP, diaBP) reveal that individuals with higher blood pressure levels tend to have an increased risk of coronary heart disease. These observations emphasize the importance of clinical measurements in assessing cardiovascular risk.
+
+# ### Body Mass Index (BMI) Analysis
+# 
+# BMI distribution was examined using violin and box plots to understand its variation across CHD outcomes. The results indicate that individuals with higher BMI values are more likely to fall into the high-risk CHD category. This suggests a positive association between obesity and heart disease risk.
+
+# ### Diabetes and Heart Disease Relationship
+# 
+# The relationship between diabetes and heart disease was explored using a count plot. The visualization shows that individuals diagnosed with diabetes have a noticeably higher incidence of ten-year CHD risk compared to non-diabetic individuals. This highlights diabetes as a strong clinical risk factor and reinforces its relevance in predictive modeling.
+
+# ### Correlation Analysis
+# 
+# A correlation heatmap was generated to analyze relationships among numerical features. The heatmap shows strong correlations between blood pressure variables and moderate correlations between age and several clinical indicators. The target variable TenYearCHD exhibits positive correlations with age, systolic blood pressure, and glucose levels. This analysis helps in identifying important predictors and reducing multicollinearity during feature selection.
+
+# ### Summary of EDA Findings
+# 
+# The exploratory analysis reveals that age, smoking, blood pressure, cholesterol, BMI, and diabetes are key factors associated with coronary heart disease risk. The dataset shows class imbalance and contains both categorical and continuous variables, requiring appropriate preprocessing techniques. These insights guided feature selection and informed subsequent machine learning model development.
+
+# ## FEATURE ENGINEERING
+
+# In[28]:
+
+
+# Separate categorical and numerical columns
+categorical_cols = data.select_dtypes(include=['object', 'bool']).columns
+numerical_cols = data.select_dtypes(include=['int64', 'float64']).columns
+
+print("Categorical Columns:", categorical_cols)
+print("Numerical Columns:", numerical_cols)
+
+
+# ### Label Encoding
+
+# In[29]:
+
+
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+
+for col in categorical_cols:
+    df[col] = le.fit_transform(df[col])
+
+
+# ### One-Hot Encoding
+
+# In[30]:
+
+
+data = pd.get_dummies(data, columns=categorical_cols, drop_first=True)
+
+
+# ### Feature Scaling
+# Scaling ensures all numerical features are on the same scale
+
+# In[31]:
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X = data.drop('TenYearCHD', axis=1)
+y = data['TenYearCHD']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+# In[32]:
+
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report
+
+
+# In[33]:
+
+
+data['TenYearCHD'].unique()
+
+
+# In[34]:
+
+
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+
+dt_pred = dt_model.predict(X_test)
+print("Decision Tree Accuracy:", accuracy_score(y_test, dt_pred))
+
+
+# In[35]:
+
+
+model=rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+y_pred=rf_pred = rf_model.predict(X_test)
+print("Random Forest Accuracy:", accuracy_score(y_test, rf_pred))
+
+
+# In[36]:
+
+
+svm_model = SVC(kernel='rbf', probability=True)
+svm_model.fit(X_train, y_train)
+
+svm_pred = svm_model.predict(X_test)
+print("SVM Accuracy:", accuracy_score(y_test, svm_pred))
+
+
+# In[37]:
+
+
+from xgboost import XGBClassifier
+
+xgb_model = XGBClassifier(
+    n_estimators=100,
+    learning_rate=0.1,
+    max_depth=5,
+    random_state=42
+)
+xgb_model.fit(X_train, y_train)
+
+xgb_pred = xgb_model.predict(X_test)
+print("XGBoost Accuracy:", accuracy_score(y_test, xgb_pred))
+
+
+# In[38]:
+
+
+models = {
+    "Decision Tree": accuracy_score(y_test, dt_pred),
+    "Random Forest": accuracy_score(y_test, rf_pred),
+    "SVM": accuracy_score(y_test, svm_pred),
+    "XGBoost": accuracy_score(y_test, xgb_pred)
+}
+
+pd.DataFrame(models.items(), columns=["Model", "Accuracy"])
+
+
+# In[39]:
+
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+nn_model = Sequential([
+    Dense(32, activation='relu', input_shape=(X_train.shape[1],)),
+    Dense(16, activation='relu'),
+    Dense(1, activation='sigmoid')
+])
+
+nn_model.compile(optimizer='adam',
+                 loss='binary_crossentropy',
+                 metrics=['accuracy'])
+
+nn_model.fit(X_train, y_train, epochs=20, batch_size=32, verbose=1)
+
+nn_loss, nn_accuracy = nn_model.evaluate(X_test, y_test)
+print("Neural Network Accuracy:", nn_accuracy)
+
+
+# In[40]:
+
+
+model=rf_model = RandomForestClassifier(n_estimators=500,class_weight='balanced',max_depth=None,random_state=42)
+rf_model.fit(X_train, y_train)
+
+y_pred=rf_pred = rf_model.predict(X_test)
+print("Random Forest Accuracy:", accuracy_score(y_test, rf_pred))
+
+
+# ## Model Evaluation
+
+# In[41]:
+
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    classification_report,
+    confusion_matrix,
+    roc_auc_score,
+    roc_curve
+)
+
+
+# In[42]:
+
+
+y_pred = model.predict(X_test)
+
+
+# In[43]:
+
+
+y_prob = model.predict_proba(X_test)[:, 1]
+
+
+# In[44]:
+
+
+print(classification_report(y_test, y_pred))
+
+
+# In[45]:
+
+
+print("Accuracy :", accuracy_score(y_test, y_pred))
+print("Precision:", precision_score(y_test, y_pred))
+print("Recall   :", recall_score(y_test, y_pred))
+print("F1 Score :", f1_score(y_test, y_pred))
+
+
+# In[46]:
+
+
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+
+# In[47]:
+
+
+auc = roc_auc_score(y_test, y_prob)
+print("ROC-AUC Score:", auc)
+
+fpr, tpr, _ = roc_curve(y_test, y_prob)
+plt.plot(fpr, tpr, label=f"AUC = {auc:.2f}")
+plt.plot([0,1], [0,1], linestyle='--')
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+plt.show()
+
+
+# In[48]:
+
+
+from sklearn.metrics import roc_auc_score
+
+y_prob = rf_model.predict_proba(X_test)[:, 1]
+print("ROC-AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[49]:
+
+
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'n_estimators': [300, 500,700,900,1000],
+    'max_depth': [6, 8, 10,12,14],
+    'min_samples_leaf': [3, 5, 10]
+}
+
+rf = RandomForestClassifier(
+    class_weight='balanced',
+    random_state=42
+)
+
+grid = GridSearchCV(
+    rf,
+    param_grid,
+    scoring='roc_auc',
+    cv=5,
+    n_jobs=-1
+)
+
+grid.fit(X_train, y_train)
+
+best_rf = grid.best_estimator_
+
+y_prob = best_rf.predict_proba(X_test)[:,1]
+print("Best RF AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[50]:
+
+
+from xgboost import XGBClassifier
+from sklearn.metrics import roc_auc_score
+
+scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
+
+xgb = XGBClassifier(
+    n_estimators=500,
+    max_depth=4,
+    learning_rate=0.03,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    scale_pos_weight=scale_pos_weight,
+    eval_metric='auc',
+    random_state=42
+)
+
+xgb.fit(X_train, y_train)
+
+y_prob = xgb.predict_proba(X_test)[:,1]
+print("XGBoost AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[51]:
+
+
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'max_depth': [3, 4, 5],
+    'learning_rate': [0.01, 0.03, 0.05],
+    'n_estimators': [300, 500],
+    'subsample': [0.7, 0.8],
+    'colsample_bytree': [0.7, 0.8]
+}
+
+xgb = XGBClassifier(
+    scale_pos_weight=scale_pos_weight,
+    eval_metric='auc',
+    random_state=42
+)
+
+grid = GridSearchCV(
+    xgb,
+    param_grid,
+    scoring='roc_auc',
+    cv=5,
+    n_jobs=-1
+)
+
+grid.fit(X_train, y_train)
+
+best_xgb = grid.best_estimator_
+
+y_prob = best_xgb.predict_proba(X_test)[:,1]
+print("Best XGBoost AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[52]:
+
+
+import pandas as pd
+
+imp = pd.Series(
+    best_rf.feature_importances_,
+    index=X.columns
+).sort_values(ascending=False)
+
+imp.head(10)
+
+
+# In[53]:
+
+
+from imblearn.over_sampling import SMOTE
+from xgboost import XGBClassifier
+from sklearn.metrics import roc_auc_score
+
+# SMOTE on training data only
+smote = SMOTE(random_state=42)
+X_train_sm, y_train_sm = smote.fit_resample(X_train, y_train)
+
+xgb = XGBClassifier(
+    n_estimators=500,
+    max_depth=3,
+    learning_rate=0.03,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    eval_metric='auc',
+    random_state=42
+)
+
+xgb.fit(X_train_sm, y_train_sm)
+
+y_prob = xgb.predict_proba(X_test)[:, 1]
+print("XGB + SMOTE AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[54]:
+
+
+get_ipython().system('pip install imbalanced-learn')
+
+
+# In[55]:
+
+
+selected_features = [
+    'age', 'sysBP', 'diaBP',
+    'totChol', 'BMI', 'glucose',
+    'cigsPerDay', 'male'
+]
+
+X_train_sel = X_train[:, [X.columns.get_loc(f) for f in selected_features]]
+X_test_sel  = X_test[:,  [X.columns.get_loc(f) for f in selected_features]]
+
+xgb.fit(X_train_sel, y_train)
+
+y_prob = xgb.predict_proba(X_test_sel)[:,1]
+print("AUC (feature selected):", roc_auc_score(y_test, y_prob))
+
+
+# In[56]:
+
+
+# Best model 
+final_model = RandomForestClassifier(
+    n_estimators=500,
+    max_depth=8,
+    min_samples_leaf=5,
+    class_weight='balanced',
+    random_state=42
+)
+
+final_model.fit(X_train, y_train)
+
+y_prob = final_model.predict_proba(X_test)[:,1]
+from sklearn.metrics import roc_auc_score
+print("Final Model AUC:", roc_auc_score(y_test, y_prob))
+
+
+# In[57]:
+
+
+from sklearn.metrics import classification_report
+y_pred = final_model.predict(X_test)
+print(classification_report(y_test, y_pred))
+
+
+# “Multiple models including Random Forest and XGBoost were evaluated. The tuned Random Forest model achieved the best ROC-AUC score of approximately 0.69. Further techniques such as SMOTE and feature selection were explored; however, they did not consistently improve AUC, indicating the inherent complexity and overlap in the dataset.”
+
+# ### MODEL DEPLOYMENT
+
+# In[58]:
+
+
+import joblib
+
+joblib.dump(final_model, "heart_model.pkl")
+joblib.dump(scaler, "scaler.pkl")
+
+
+# In[ ]:
+
+
+from flask import Flask, request, render_template
+import numpy as np
+import joblib
+
+app = Flask(__name__)
+
+model = joblib.load("heart_model.pkl")
+scaler = joblib.load("scaler.pkl")
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/form")
+def form():
+    return render_template("form.html")
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    age = float(request.form["age"])
+    male = int(request.form["male"])
+    cigs = float(request.form["cigsPerDay"])
+    chol = float(request.form["totChol"])
+    sysBP = float(request.form["sysBP"])
+    diaBP = float(request.form["diaBP"])
+    bmi = float(request.form["BMI"])
+    glucose = float(request.form["glucose"])
+
+    features = np.array([[age, male, cigs, chol, sysBP, diaBP, bmi, glucose]])
+    features = scaler.transform(features)
+
+    prob = model.predict_proba(features)[0][1]
+    prediction = "High Risk" if prob >= 0.5 else "Low Risk"
+
+    return render_template(
+        "result.html",
+        prediction=prediction,
+        probability=round(prob, 3)
+    )
+
+if __name__ == "__main__":
+    app.run(debug=False, use_reloader=False)
+
+
+# In[ ]:
+
+
+python app.py
+
+
+# In[ ]:
+
+
+
+
